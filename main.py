@@ -9,23 +9,30 @@ from typing import Iterator
 
 def list_all_files(path_raw) -> Iterator[str]:
   """Returns a list of all files in the path excluding the path name"""
-  path = os.path.abspath(path_raw)
-  path_length = len(path) + 1 # Also removes the leading slash
+  path = os.path.abspath(path_raw).rstrip('/')
+  path_length = len(path) # Also removes the leading slash
   for f in glob.glob(path + '/**/*', recursive=True):
     yield f[path_length:]
 
 # Reads the path to inspect along with an optional file to find ownership for or the team for which to file files
-def main(root, path: str | None = None, team: str | None = None):
+def main(root, path: str | None = None, owner: str | None = None):
   # If a file is specified, find the owner of the file
   if path:
+    all_owners = set()
     all_paths = find_all_owners(root)
-    clean_path = path.lstrip('/')
+    clean_path = os.path.join('/', path.lstrip('/'))
     for a_path in all_paths:
       if fnmatch.fnmatch(clean_path, a_path.glob_path):
-        print("\n".join(a_path.owners))
+        all_owners.update(a_path.owners)
+    print("\n".join(all_owners))
   # If a team is specified, find all files owned by the team
-  elif team:
-    print(find_team_files(root, team))
+  elif owner:
+    all_paths = find_all_owners(root)
+    all_paths_for_owner = [path for path in all_paths if owner in path.owners]
+    for file in list_all_files(root):
+      for path_for_owner in all_paths_for_owner:
+        if fnmatch.fnmatch(file, path_for_owner.glob_path):
+          print(file)
   # If neither a file nor a team is specified, find all files and their owners
   else:
     try:
@@ -39,10 +46,10 @@ def main(root, path: str | None = None, team: str | None = None):
         for a_path in all_paths:
           if len(a_path.owners) > 0 and fnmatch.fnmatch(file, a_path.glob_path):
             found = True
-            for owner in a_path.owners:
-              if owner not in ownership_count:
-                ownership_count[owner] = 0
-              ownership_count[owner] += 1
+            for an_owner in a_path.owners:
+              if an_owner not in ownership_count:
+                ownership_count[an_owner] = 0
+              ownership_count[an_owner] += 1
         if not found:
           unowned += 1
       print("Total: %d\nUnowned: %d\n%s" % (total, unowned, '\n'.join(["%s: %d" % (k, v) for k, v in ownership_count.items()])))
@@ -119,7 +126,7 @@ def read_ownership_file(filepath: str) -> list[Path]:
 
       # This is f path line
       parts = list(map(lambda x: x.strip(), line.split(' ')))
-      paths.append(Path(parts[0].lstrip('/'), parts[1:], section=current_section))
+      paths.append(Path(parts[0], parts[1:], section=current_section))
   return paths
 
 def find_owners(path, file):
@@ -138,11 +145,11 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(
   prog='python3 ownership-inspector.py',
   usage='%(prog)s [options]',
-  description='List ownership for the project, a single team, or a single file')
+  description='List ownership for the project, a single owner, or a single file')
 
   parser.add_argument('root')
   parser.add_argument('--path', type=str, help='The path to inspect')
-  parser.add_argument('--team', type=str, help='The team for which to list files')
+  parser.add_argument('--owner', type=str, help='The owner for which to list files')
   args = parser.parse_args(sys.argv[1:])
 
-  main(args.root, args.path, args.team)
+  main(args.root, args.path, args.owner)
