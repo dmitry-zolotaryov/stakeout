@@ -5,11 +5,13 @@ import os
 import pathlib
 import re
 import sys
+from typing import Generator
 
-def list_all_files(path) -> list[str]:
+def list_all_files(path) -> Generator[str, None, None]:
   """Returns a list of all files in the path excluding the path name"""
   path_length = len(path) + 1 # Also removes the leading slash
-  return [f[path_length:] for f in glob.glob(path + '/**/*', recursive=True)]
+  for f in glob.glob(path + '/**/*', recursive=True):
+    yield f[path_length:]
 
 # Reads the path to inspect along with an optional file to find ownership for or the team for which to file files
 def main(root, path: str | None = None, team: str | None = None):
