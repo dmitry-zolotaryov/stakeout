@@ -1,13 +1,22 @@
 import argparse
+import fnmatch
 import glob
 import os
+import pathlib
 import re
 import sys
+
+def list_all_files(path) -> list[str]:
+  """Returns a list of all files in the path excluding the path name"""
+  path_length = len(path) + 1 # Also removes the leading slash
+  return [f[path_length:] for f in glob.glob(path + '/**/*', recursive=True)]
 
 # Reads the path to inspect along with an optional file to find ownership for or the team for which to file files
 def main(root, path: str | None = None, team: str | None = None):
   # If a file is specified, find the owner of the file
   if path:
+    all_paths = find_all_owners(root)
+
     print(find_owners(root, path))
   # If a team is specified, find all files owned by the team
   elif team:
@@ -15,7 +24,23 @@ def main(root, path: str | None = None, team: str | None = None):
   # If neither a file nor a team is specified, find all files and their owners
   else:
     try:
-      print(find_all_owners(root))
+      total = 0
+      unowned = 0
+      ownership_count: dict[str, int] = {}
+      all_paths = find_all_owners(root)
+      for file in list_all_files(root):
+        total += 1
+        found = False
+        for a_path in all_paths:
+          if len(a_path.owners) > 0 and fnmatch.fnmatch(file, a_path.glob_path):
+            found = True
+            for owner in a_path.owners:
+              if owner not in ownership_count:
+                ownership_count[owner] = 0
+              ownership_count[owner] += 1
+        if not found:
+          unowned += 1
+      print("Total: %d\nUnowned: %d\n%s" % (total, unowned, '\n'.join(["%s: %d" % (k, v) for k, v in ownership_count.items()])))
     except Exception as e:
       print(e)
 
