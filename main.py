@@ -24,7 +24,8 @@ def main(root, path: str | None = None, owner: str | None = None):
     for a_path in all_paths:
       if fnmatch.fnmatch(clean_path, a_path.glob_path):
         all_owners.update(a_path.owners)
-    print("\n".join(all_owners))
+    if len(all_owners) > 0:
+      print("\n".join(all_owners))
   # If a team is specified, find all files owned by the team
   elif owner:
     all_paths = find_all_owners(root)
@@ -124,9 +125,14 @@ def read_ownership_file(filepath: str) -> list[Path]:
         )
         continue
 
-      # This is f path line
+      # This is file path line
       parts = list(map(lambda x: x.strip(), line.split(' ')))
-      paths.append(Path(parts[0], parts[1:], section=current_section))
+      file_glob = parts[0]
+      if not file_glob.startswith(os.sep):
+        # Fixes the path to match any file regardless of the directory, if it
+        # doesn't start with a slash
+        file_glob = '**/%s' % file_glob
+      paths.append(Path(file_glob, parts[1:], section=current_section))
   return paths
 
 def find_owners(path, file):
