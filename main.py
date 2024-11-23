@@ -7,8 +7,9 @@ import re
 import sys
 from typing import Iterator
 
-def list_all_files(path) -> Iterator[str]:
+def list_all_files(path_raw) -> Iterator[str]:
   """Returns a list of all files in the path excluding the path name"""
+  path = os.path.abspath(path_raw)
   path_length = len(path) + 1 # Also removes the leading slash
   for f in glob.glob(path + '/**/*', recursive=True):
     yield f[path_length:]
@@ -18,8 +19,10 @@ def main(root, path: str | None = None, team: str | None = None):
   # If a file is specified, find the owner of the file
   if path:
     all_paths = find_all_owners(root)
-
-    print(find_owners(root, path))
+    clean_path = path.lstrip('/')
+    for a_path in all_paths:
+      if fnmatch.fnmatch(clean_path, a_path.glob_path):
+        print("\n".join(a_path.owners))
   # If a team is specified, find all files owned by the team
   elif team:
     print(find_team_files(root, team))
