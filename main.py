@@ -36,35 +36,39 @@ class Section(object):
   def __init__(self, name, owners):
     self.name = name
     self.owners = owners
-    self.paths = []
-
-  def __repr__(self):
-    return "Section: %s, Owners: %s, paths: %s" % (self.name, self.owners, self.paths)
-
-  @staticmethod
-  def NoneSection():
-    return Section("None", [])
 
 class Path(object):
   """A single path that either has own owners or inherits from the parent section"""
-  def __init__(self, glob_path: str, owners: list[str]):
+  def __init__(self, glob_path: str, owners: list[str], section: Section | None = None):
     self.glob_path = glob_path
-    self.owner = owners
+    self.section = section
+
+    if len(owners) > 0:
+      self.owners = owners
+    elif section is not None:
+      self.owners = section.owners
 
   def __repr__(self):
-    return "Path: %s, Owners: %s" % (self.glob_path, self.owner)
+    section_name = self.section.name if self.section is not None else 'None'
+    return "Path: %s - Owners: %s - Section: %s" % (self.glob_path, self.owners, section_name)
 
 def line_to_parts(line: str) -> list[str]:
   return list(filter(lambda x: x, map(lambda x: x.strip(), line.split(' '))))
 
-def read_ownership_file(filepath: str) -> list[Section]:
+def read_ownership_file(filepath: str) -> list[Path]:
   # Reads a gitlab ownership file into a structure
-  sections: list[Section] = []
+  paths: list[Path] = []
+  current_section = None
+
   with open(filepath, 'r') as f:
     for line_number, line_raw in enumerate(f):
       line = line_raw.strip()
+
+      # Removes comments
+      line = line.split('#')[0].strip()
+
       # This is a comment line
-      if line.startswith('#') or len(line) == 0:
+      if len(line) == 0:
         continue
 
       # There are two ways to indicate a section: either with a [section_name] or ^[section_name].
@@ -77,29 +81,16 @@ def read_ownership_file(filepath: str) -> list[Section]:
         if result is None:
           raise ValueError('Invalid section name on line %d: %s' % (line_number, line_raw))
 
-        sections.append(Section(
+        current_section = Section(
           name=result.group(2),
           owners=line_to_parts(result.group(4)),
-        ))
-
-      if len(sections) == 0:
-        sections.append(Section.NoneSection())
+        )
+        continue
 
       # This is f path line
       parts = list(map(lambda x: x.strip(), line.split(' ')))
-      sections[-1].paths.append(Path(parts[0], parts[1:]))
-
-      # if line.startswith('*'):
-      #   sections.append(current_section)
-      #   current_section = Section(line[1:].strip(), [])
-      # else:
-      #   parts = line.split()
-      #   if len(parts) == 0:
-      #     continue
-      #   current_section.owners.append(parts[0])
-      #   for path in parts[1:]:
-      #     current_section.paths.append(Path(path, parts[0]))
-  return sections
+      paths.append(Path(parts[0].lstrip('/'), parts[1:], section=current_section))
+  return paths
 
 def find_owners(path, file):
     # Find the owner of the file
