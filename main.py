@@ -7,15 +7,10 @@ import re
 import sys
 from typing import Iterator
 
-def list_all_files(path_raw) -> Iterator[str]:
-  """Returns a list of all files in the path excluding the path name"""
-  path = os.path.abspath(path_raw).rstrip('/')
-  path_length = len(path) # Also removes the leading slash
-  for f in glob.glob(path + '/**/*', recursive=True):
-    yield f[path_length:]
-
 # Reads the path to inspect along with an optional file to find ownership for or the team for which to file files
-def main(root, path: str | None = None, owner: str | None = None):
+def main(root_raw, path: str | None = None, owner: str | None = None):
+  root = os.path.abspath(root_raw).rstrip('/')
+
   # If a file is specified, find the owner of the file
   if path:
     all_owners = set()
@@ -56,6 +51,12 @@ def main(root, path: str | None = None, owner: str | None = None):
       print("Total: %d\nUnowned: %d\n%s" % (total, unowned, '\n'.join(["%s: %d" % (k, v) for k, v in ownership_count.items()])))
     except Exception as e:
       print(e)
+
+def list_all_files(path) -> Iterator[str]:
+  """Returns a list of all files in the path excluding the path name"""
+  path_length = len(path) # Also removes the leading slash
+  for f in glob.glob(path + '/**/*', recursive=True):
+    yield f[path_length:]
 
 def find_ownership_file(root: str) -> str:
     # Read the ownership file
@@ -134,14 +135,6 @@ def read_ownership_file(filepath: str) -> list[Path]:
         file_glob = '**/%s' % file_glob
       paths.append(Path(file_glob, parts[1:], section=current_section))
   return paths
-
-def find_owners(path, file):
-    # Find the owner of the file
-    return 'owners'
-
-def find_team_files(path, team):
-    # Find all files owned by the team
-    return 'files'
 
 def find_all_owners(path):
     # Find all files and their owners
