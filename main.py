@@ -5,9 +5,9 @@ import os
 import pathlib
 import re
 import sys
-from typing import Generator
+from typing import Iterator
 
-def list_all_files(path) -> Generator[str, None, None]:
+def list_all_files(path) -> Iterator[str]:
   """Returns a list of all files in the path excluding the path name"""
   path_length = len(path) + 1 # Also removes the leading slash
   for f in glob.glob(path + '/**/*', recursive=True):
