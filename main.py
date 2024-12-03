@@ -52,11 +52,26 @@ def main(root_raw, path: str | None = None, owner: str | None = None):
     except Exception as e:
       print(e)
 
-def list_all_files(path) -> Iterator[str]:
+def list_all_files(path, original_root = None, ignored: list[str] = []) -> Iterator[str]:
   """Returns a list of all files in the path excluding the path name"""
-  path_length = len(path) # Also removes the leading slash
-  for f in glob.glob(path + '/**/*', recursive=True):
-    yield f[path_length:]
+  yield from __iterate_over_files(path, path, [])
+
+def __iterate_over_files(path, original_root, ignored: list[str] = []) -> Iterator[str]:
+  """Returns a list of all files in the path excluding the path name"""
+  files = os.listdir(path)
+  for f in files:
+    full_file_path = os.path.join(path, f)
+    if os.path.isdir(full_file_path):
+      yield from __iterate_over_files(full_file_path, original_root, ignored)
+    else:
+      relative_file_path = full_file_path[len(original_root):]
+      for ignored_glog in ignored:
+        if fnmatch.fnmatch(relative_file_path, ignored_glog):
+          break
+      else:
+        yield relative_file_path
+        continue
+      break
 
 def find_ownership_file(root: str) -> str:
     # Read the ownership file
@@ -142,7 +157,7 @@ def find_all_owners(path):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
-  prog='python3 ownership-inspector.py',
+  prog='python3 main.py',
   usage='%(prog)s [options]',
   description='List ownership for the project, a single owner, or a single file')
 
