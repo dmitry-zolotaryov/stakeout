@@ -1,3 +1,20 @@
 [tool.pyright]
 venvPath = "."
 venv = ".env"
+
+[project]
+name = "stakeout"
+version = "1.0.1"
+authors = [
+  { name="Dmitry Zolotaryov", email="dim.zol@gmail.com" },
+]
+description = "A tool to inspect source code ownership."
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+stakeout = "stakeout.main:run"
+
+[project.urls]
+Homepage = "https://github.com/dmitry-zolotaryov/stakeout"
+Issues = "https://github.com/dmitry-zolotaryov/stakeout/issues"

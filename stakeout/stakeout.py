@@ -1,10 +1,8 @@
-import argparse
 import fnmatch
 import glob
 import os
 import pathlib
 import re
-import sys
 from typing import Iterator
 
 # Reads the path to inspect along with an optional file to find ownership for or the team for which to file files
@@ -154,20 +152,3 @@ def read_ownership_file(filepath: str) -> list[Path]:
 def find_all_owners(path):
     # Find all files and their owners
     return read_ownership_file(find_ownership_file(path))
-
-def run():
-  '''Runs the program'''
-  parser = argparse.ArgumentParser(
-  prog='python3 main.py',
-  usage='%(prog)s [options]',
-  description='List ownership for the project, a single owner, or a single file')
-
-  parser.add_argument('root')
-  parser.add_argument('--path', type=str, help='The path to inspect')
-  parser.add_argument('--owner', type=str, help='The owner for which to list files')
-  args = parser.parse_args(sys.argv[1:])
-
-  main(args.root, args.path, args.owner)
-
-if __name__ == '__main__':
-  run()
