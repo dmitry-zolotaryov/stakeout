@@ -155,7 +155,8 @@ def find_all_owners(path):
     # Find all files and their owners
     return read_ownership_file(find_ownership_file(path))
 
-if __name__ == '__main__':
+def run():
+  '''Runs the program'''
   parser = argparse.ArgumentParser(
   prog='python3 main.py',
   usage='%(prog)s [options]',
@@ -167,3 +168,6 @@ if __name__ == '__main__':
   args = parser.parse_args(sys.argv[1:])
 
   main(args.root, args.path, args.owner)
+
+if __name__ == '__main__':
+  run()
