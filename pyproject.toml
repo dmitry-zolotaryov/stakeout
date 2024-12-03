@@ -6,7 +6,7 @@ venv = ".env"
 name = "stakeout"
 version = "1.0.1"
 authors = [
-  { name="Dmitry Zolotaryov", email="dim.zol@gmail.com" },
+  { name="Dmitry Zolotaryov", email="dmitry@zolotaryov.com" },
 ]
 description = "A tool to inspect source code ownership."
 readme = "README.md"
