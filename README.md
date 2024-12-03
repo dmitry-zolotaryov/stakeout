@@ -44,5 +44,5 @@ Distribute
 
 ```bash
 python3 -m build
-python3 -m twine upload --repository stakeout dist/*
+python3 -m twine upload dist/*
 ```
