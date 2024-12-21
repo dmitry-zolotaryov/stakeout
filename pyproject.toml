@@ -4,7 +4,7 @@ venv = ".env"
 
 [project]
 name = "stakeout"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
   { name="Dmitry Zolotaryov", email="dmitry@zolotaryov.com" },
 ]
